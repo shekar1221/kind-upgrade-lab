@@ -108,6 +108,8 @@ Clean up:
 
 ## Learning Order
 
+For exact command-by-command execution, use `STEP_BY_STEP.md`.
+
 1. Read `docs/deployment-strategies.md`.
 2. Run rolling update.
 3. Run blue-green switch.
