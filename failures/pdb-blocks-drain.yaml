@@ -1,0 +1,37 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: payments-pdb-block
+  namespace: rollout-lab
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: payments-pdb-block
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-pdb-block
+  namespace: rollout-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payments-pdb-block
+  template:
+    metadata:
+      labels:
+        app: payments-pdb-block
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: kind-upgrade-lab-worker
+      containers:
+        - name: http-echo
+          image: hashicorp/http-echo:1.0
+          args:
+            - -listen=:5678
+            - -text=pdb blocks drain demo
+          ports:
+            - name: http
+              containerPort: 5678

@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-bad-image
+  namespace: rollout-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payments-bad-image
+  template:
+    metadata:
+      labels:
+        app: payments-bad-image
+    spec:
+      containers:
+        - name: bad
+          image: example.invalid/payments-api:not-real
+          ports:
+            - name: http
+              containerPort: 5678

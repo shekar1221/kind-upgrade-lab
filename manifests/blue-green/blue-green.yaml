@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments-bg
+  namespace: rollout-lab
+spec:
+  selector:
+    app: payments-bg
+    version: blue
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-blue
+  namespace: rollout-lab
+  labels:
+    app: payments-bg
+    version: blue
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payments-bg
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: payments-bg
+        version: blue
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: http-echo
+          image: hashicorp/http-echo:1.0
+          args:
+            - -listen=:5678
+            - -text=payments-api BLUE active
+          ports:
+            - name: http
+              containerPort: 5678
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-green
+  namespace: rollout-lab
+  labels:
+    app: payments-bg
+    version: green
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payments-bg
+      version: green
+  template:
+    metadata:
+      labels:
+        app: payments-bg
+        version: green
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: http-echo
+          image: hashicorp/http-echo:1.0
+          args:
+            - -listen=:5678
+            - -text=payments-api GREEN candidate
+          ports:
+            - name: http
+              containerPort: 5678
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
